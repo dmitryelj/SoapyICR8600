@@ -12,6 +12,12 @@ Current status: beta, Windows version only (Linux version will be made later).
 
 To be done.
 
+## Install
+
+Windows: put icr8600Support.dll file from 'release' folder to SoapySDR modules DLL ("C:\Program Files\PothosSDR\lib\SoapySDR\modules0.6" by default).
+
+Linux: Linux version is not ready yet. 
+
 ## Licensing information
 
 The MIT License (MIT)
