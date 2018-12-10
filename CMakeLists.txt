@@ -33,6 +33,9 @@ if (APPLE)
 endif(APPLE)
 
 set(OTHER_LIBS "" CACHE STRING "Other libraries")
+if (LINUX)
+    list(APPEND OTHER_LIBS -lusb-1.0)
+endif(LINUX)
 
 SOAPY_SDR_MODULE_UTIL(
     TARGET icr8600Support
@@ -41,8 +44,8 @@ SOAPY_SDR_MODULE_UTIL(
         Registation.cpp
         Settings.cpp
         Streaming.cpp
-        WinUSBDevice.cpp
-        WinUSBDevice.h
+		WinUSBDevice.cpp
+		WinUSBDevice.h
     LIBRARIES
         ${OTHER_LIBS}
 )

@@ -14,17 +14,28 @@
 
 #include "WinUSBDevice.h"
 
+#ifdef _WIN32
+
 #pragma comment(lib, "winusb.lib") 
 #pragma comment(lib, "Cfgmgr32.lib")
+
+#else
+
+void Sleep(int milliseconds)
+{
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
+}
+
+#endif
 
 HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  BufLen, _Out_opt_ PBOOL  FailureDeviceNotFound);
 
 BOOL FindICR8600Device()
-/*++
-Routine description:
-	Check if Icom IC-R8600 device is connected to the USB port.
---*/
 {
+#ifdef _WIN32
 	DEVICE_DATA deviceData;
 	BOOL notFound = false;
 	HRESULT hr = RetrieveDevicePath(deviceData.DevicePath, sizeof(deviceData.DevicePath), &notFound);
@@ -32,27 +43,61 @@ Routine description:
 		return FALSE;
 	}
 	return TRUE;
+#else
+	int r = libusb_init(NULL);
+	if (r < 0)
+	    return FALSE;
+
+	BOOL res = FALSE;
+
+    libusb_device **devs;
+	ssize_t cnt = libusb_get_device_list(NULL, &devs);
+    for (int i = 0; i < cnt; i++) {
+        libusb_device *device = devs[i];
+
+        struct libusb_device_descriptor desc;
+		int r = libusb_get_device_descriptor(device, &desc);
+        if (r < 0) continue;
+
+        printf("Device %04x:%04x, Manufacturer: %d\n", desc.idVendor, desc.idProduct, desc.iManufacturer);
+
+//        libusb_device_handle *handle;
+//        int err = libusb_open(device, &handle);
+//        if (err) {
+//            printf("  Error: cannot open device\n");
+//            continue;
+//        }
+//        // Get description
+//        const int STRING_LENGTH = 255;
+//        unsigned char stringDescription[STRING_LENGTH];
+//        if (desc.iManufacturer > 0) {
+//            r = libusb_get_string_descriptor_ascii(handle, desc.iManufacturer, stringDescription, STRING_LENGTH);
+//            if (r >= 0)
+//                printf("Manufacturer = %s\n",  stringDescription);
+//        }
+//        if (desc.iProduct > 0) {
+//            r = libusb_get_string_descriptor_ascii(handle, desc.iProduct, stringDescription, STRING_LENGTH);
+//            if ( r >= 0 )
+//                printf("Product = %s\n", stringDescription);
+//        }
+//        if (desc.iSerialNumber > 0) {
+//            r = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, stringDescription, STRING_LENGTH);
+//            if (r >= 0)
+//                printf("SerialNumber = %s\n", stringDescription);
+//        }
+//        printf("\n");
+//        libusb_close(handle);
+    }
+
+	libusb_free_device_list(devs, 1);
+	libusb_exit(NULL);
+    return res;
+#endif
 }
 
 HRESULT OpenDevice(_Out_ PDEVICE_DATA DeviceData, _Out_opt_ PBOOL FailureDeviceNotFound)
-/*++
-Routine description:
-    Open all needed handles to interact with the device.
-    If the device has multiple USB interfaces, this function grants access to
-    only the first interface.
-    If multiple devices have the same device interface GUID, there is no
-    guarantee of which one will be returned.
-
-Arguments:
-    DeviceData - Struct filled in by this function. The caller should use the
-        WinusbHandle to interact with the device, and must pass the struct to
-        CloseDevice when finished.
-    FailureDeviceNotFound - TRUE when failure is returned due to no devices
-        found with the correct device interface (device not connected, driver
-        not installed, or device is disabled in Device Manager); FALSE
-        otherwise.
---*/
 {
+#ifdef _WIN32
     HRESULT hr = S_OK;
     BOOL    bResult;
 
@@ -86,18 +131,29 @@ Arguments:
 
     DeviceData->HandlesOpen = TRUE;
     return hr;
+#else
+    return 0;
+#endif
+}
+
+BOOL GetDeviceDescriptor(WINUSB_INTERFACE_HANDLE hDeviceHandle, _Out_ USB_DEVICE_DESCRIPTOR *pDeviceDesc)
+{
+#ifdef _WIN32
+    ULONG lengthReceived;
+	BOOL bResult = WinUsb_GetDescriptor(hDeviceHandle, USB_DEVICE_DESCRIPTOR_TYPE, 0, 0, (PBYTE)pDeviceDesc, sizeof(USB_DEVICE_DESCRIPTOR), &lengthReceived);
+	if (FALSE == bResult || lengthReceived != sizeof(USB_DEVICE_DESCRIPTOR)) {
+		printf("Error among LastError %d or lengthReceived %d\n", FALSE == bResult ? GetLastError() : 0, lengthReceived);
+		return FALSE;
+	}
+	return TRUE;
+#else
+    return FALSE;
+#endif
 }
 
 VOID CloseDevice(_Inout_ PDEVICE_DATA DeviceData)
-/*++
-Routine description:
-    Perform required cleanup when the device is no longer needed.
-    If OpenDevice failed, do nothing.
-
-Arguments:
-    DeviceData - Struct filled in by OpenDevice
---*/
 {
+#ifdef _WIN32
     if (FALSE == DeviceData->HandlesOpen) {
         //
         // Called on an uninitialized DeviceData
@@ -109,23 +165,14 @@ Arguments:
     CloseHandle(DeviceData->DeviceHandle);
     DeviceData->HandlesOpen = FALSE;
 	DeviceData->DeviceHandle = INVALID_HANDLE_VALUE;
+#else
+    return;
+#endif
 }
 
 HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  BufLen, _Out_opt_ PBOOL  FailureDeviceNotFound)
-/*++
-Routine description:
-    Retrieve the device path that can be used to open the WinUSB-based device.
-    If multiple devices have the same device interface GUID, there is no
-    guarantee of which one will be returned.
-Arguments:
-    DevicePath - On successful return, the path of the device (use with CreateFile).
-    BufLen - The size of DevicePath's buffer, in bytes
-    FailureDeviceNotFound - TRUE when failure is returned due to no devices
-        found with the correct device interface (device not connected, driver
-        not installed, or device is disabled in Device Manager); FALSE
-        otherwise.
--*/
 {
+#ifdef _WIN32
     CONFIGRET cr = CR_SUCCESS;
     HRESULT   hr = S_OK;
     PTSTR     DeviceInterfaceList = NULL;
@@ -203,9 +250,14 @@ Arguments:
     HeapFree(GetProcessHeap(), 0, DeviceInterfaceList);
 
     return hr;
+#else
+    return 0;
+#endif
 }
 
-BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG* pcbWritten, PUCHAR send, ULONG cbSize) {
+BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG* pcbWritten, PUCHAR send, ULONG cbSize)
+{
+#ifdef _WIN32
 	if (hDeviceHandle == INVALID_HANDLE_VALUE || !pcbWritten) {
 		return FALSE;
 	}
@@ -220,9 +272,14 @@ BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG*
 	}
 
 	return bResult;
+#else
+    return FALSE;
+#endif
 }
 
-BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG cbSize) {
+BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG cbSize)
+{
+#ifdef _WIN32
 	if (hDeviceHandle == INVALID_HANDLE_VALUE) {
 		return FALSE;
 	}
@@ -251,6 +308,9 @@ BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG
 
 	LocalFree(szBuffer);
 	return bResult;
+#else
+    return FALSE;
+#endif
 }
 
 void ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
@@ -265,11 +325,6 @@ void ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 void ICR8600SetRemoteOff(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
 	ULONG sent = 0;
-	// UCHAR iq_stop_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x01, 0x00, 0x00, 0x06,  0xFD, 0xFF };
-	// WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_stop_cmd, sizeof(iq_stop_cmd));
-	// ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
-	// Sleep(100);
-
 	UCHAR remote_off_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x00, 0x00,  0xFD, 0xFF };
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, remote_off_cmd, sizeof(remote_off_cmd));
 	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
@@ -339,7 +394,7 @@ BOOL ICR8600SetFrequency(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG frequency)
 
 BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, int antennaIndex)
 {
-	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x12, antennaIndex,  0xFD, 0xFF };
+	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x12, (UCHAR)antennaIndex,  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
 	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
@@ -349,8 +404,10 @@ BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, int antennaIndex)
 ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULONG BufferLength) 
 {
 	ULONG cbRead = 0;
+#ifdef _WIN32
 	BOOL bResult = WinUsb_ReadPipe(hDeviceHandle, PIPE_IQ_ID, Buffer, BufferLength, &cbRead, 0);
 	if (bResult) {
 	}
+#endif
 	return cbRead;
 }

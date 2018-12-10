@@ -42,10 +42,9 @@ SoapyICR8600::SoapyICR8600(const SoapySDR::Kwargs &args)
 		throw std::runtime_error("Icom ICR8600 not found or cannot be opened.");
 	}
 
-	ULONG lengthReceived;
-	BOOL bResult = WinUsb_GetDescriptor(deviceData.WinusbHandle, USB_DEVICE_DESCRIPTOR_TYPE, 0, 0, (PBYTE)&deviceDesc, sizeof(deviceDesc), &lengthReceived);
-	if (FALSE == bResult || lengthReceived != sizeof(deviceDesc)) {
-		printf("Error among LastError %d or lengthReceived %d\n", FALSE == bResult ? GetLastError() : 0, lengthReceived);
+	BOOL bResult = GetDeviceDescriptor(deviceData.WinusbHandle, &deviceDesc);
+	if (FALSE == bResult) {
+		printf("GetDeviceDescriptor: failed\n");
 		throw std::runtime_error("WinUsb_GetDescriptor failed");
 	}
 
