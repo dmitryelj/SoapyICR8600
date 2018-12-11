@@ -272,7 +272,7 @@ void SoapyICR8600::setFrequency(const int direction, const size_t channel, const
 	if (name == "RF")
 	{
 		centerFrequency = (ULONG)frequency;
-		SoapySDR_logf(SOAPY_SDR_INFO, "Setting center freq: %d for %s", centerFrequency, name);
+		SoapySDR_logf(SOAPY_SDR_INFO, "Setting center freq: %d for %s", centerFrequency, name.c_str());
 		ICR8600SetFrequency(deviceData.WinusbHandle, centerFrequency);
 	} else if (name == "CORR")
 	{
