@@ -48,6 +48,7 @@ typedef unsigned char UCHAR;
 typedef unsigned char* PUCHAR;
 typedef void*   PBYTE;
 typedef uint32_t ULONG;
+typedef uint32_t* PULONG;
 typedef int32_t HANDLE;
 typedef int32_t HRESULT;
 
@@ -106,15 +107,18 @@ HRESULT OpenDevice(_Out_ PDEVICE_DATA DeviceData, _Out_opt_ PBOOL FailureDeviceN
 BOOL    GetDeviceDescriptor(_In_ WINUSB_INTERFACE_HANDLE hDeviceHandle, _Out_ USB_DEVICE_DESCRIPTOR *pDeviceDesc);
 VOID	CloseDevice(_Inout_ PDEVICE_DATA DeviceData);
 
-void ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle);
-void ICR8600SetRemoteOff(WINUSB_INTERFACE_HANDLE hDeviceHandle);
+BOOL ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle);
+BOOL ICR8600SetRemoteOff(WINUSB_INTERFACE_HANDLE hDeviceHandle);
 BOOL ICR8600SetSampleRate(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG sampleRate);
 BOOL ICR8600SetFrequency(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG frequency);
 BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, int antennaIndex);
 ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULONG BufferLength);
 BOOL ICR8600SetPreAmpOn(WINUSB_INTERFACE_HANDLE hDeviceHandle);
 BOOL ICR8600SetPreAmpOff(WINUSB_INTERFACE_HANDLE hDeviceHandle);
+BOOL ICR8600GetPreAmpState(WINUSB_INTERFACE_HANDLE hDeviceHandle, PBOOL on);
 BOOL ICR8600SetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG gain);
+BOOL ICR8600GetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain);
 BOOL ICR8600SetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG atten);
+BOOL ICR8600GetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain);
 
 #endif // WINUSB_DEFINES

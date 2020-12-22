@@ -242,32 +242,57 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const std:
 
 double SoapyICR8600::getGain(const int direction, const size_t channel, const std::string &name) const
 {
-	//if ((name.length() >= 2) && (name.substr(0, 2) == "IF"))
-	//{
-	//    int stage = 1;
-	//    if (name.length() > 2)
-	//    {
-	//        int stage_in = name.at(2) - '0';
-	//        if ((stage_in < 1) || (stage_in > 6))
-	//        {
-	//            throw std::runtime_error("Invalid IF stage, 1 or 1-6 for E4000");
-	//        } else {
-	//            stage = stage_in;
-	//        }
-	//    }
-	//    if (tunerType == RTLSDR_TUNER_E4000) {
-	//        return getE4000Gain(stage, IFGain[stage - 1]);
-	//    }
+	ULONG gain;
+	if (name == "RF")
+	{
+		if (ICR8600GetGainRF(deviceData.WinusbHandle, &gain))
+		{
+			return (double)gain;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else if (name == "PRE-AMP")
+	{
+		BOOL on;
 
-	//    return IFGain[stage - 1];
-	//}
-
-	//if (name == "TUNER")
-	//{
-	//    return tunerGain;
-	//}
-
-	return 10;
+		if (ICR8600GetPreAmpState(deviceData.WinusbHandle, &on))
+		{
+			if (on)
+				return(14.0);
+			else
+				return(0.0);
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else if (name == "ATTENUATOR")
+	{
+		if (ICR8600GetAttenuator(deviceData.WinusbHandle, &gain))
+		{
+			if (gain != 0)
+				// convert to negative
+				return -1.0*(double)gain;
+			else
+				return 0.0;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		// invalid gain name was given
+		// do nothing, or throw an error
+		// SoapySDR_logf(SOAPY_SDR_DEBUG, "Setting RTL-SDR IF Gain for stage %d: %f", stage, IFGain[stage - 1]);
+		// throw std::runtime_error("Invalid IF stage, 1 or 1-6 for E4000");
+	}
+	return 0;
 }
 
 // removed for now

@@ -4,6 +4,7 @@ import SoapySDR
 from SoapySDR import * #SOAPY_SDR_ constants
 import numpy #use numpy for buffers
 import time
+import ctypes
 
 # To test add path: set SOAPY_SDR_PLUGIN_PATH=C:\Users\DMITRII\SoapyICR8600\build\x64\Release;
 
@@ -26,17 +27,25 @@ for gain in gains:
 	print("\t" + gain + " (min, max, step): " + str(sdr.getGainRange(SOAPY_SDR_RX, 0, gain)))
 
 sdr.setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 0.0)
+print("PRE-AMP Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "PRE-AMP")))
 sdr.setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 14.0)
+print("PRE-AMP Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "PRE-AMP")))
 
 sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", 0.0)
+print("Attenuator Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "ATTENUATOR")))
 sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -10.0)
+print("Attenuator Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "ATTENUATOR")))
 sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -20.0)
+print("Attenuator Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "ATTENUATOR")))
 sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -30.0)
+print("Attenuator Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "ATTENUATOR")))
 
 sdr.setGain(SOAPY_SDR_RX, 0, "RF", 0.0)
+print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
 sdr.setGain(SOAPY_SDR_RX, 0, "RF", 128.0)
+print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
 sdr.setGain(SOAPY_SDR_RX, 0, "RF", 255.0)
-
+print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
 
 freqs = sdr.getFrequencyRange(SOAPY_SDR_RX, 0)
 for freqRange in freqs: print(freqRange)
