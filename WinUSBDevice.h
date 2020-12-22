@@ -19,6 +19,8 @@
 #ifndef WINUSB_DEFINES
 #define WINUSB_DEFINES
 
+#include <SoapySDR/Logger.h>
+
 #ifdef _WIN32
 
 #include <initguid.h>

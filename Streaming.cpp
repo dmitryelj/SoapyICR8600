@@ -94,9 +94,7 @@ SoapySDR::Stream *SoapyICR8600::setupStream(const int direction, const std::stri
 
 	bufferData = (unsigned char*)malloc(2 * bufferLength * sizeof(unsigned char));
 
-	// Enable remote and set other parameters
-	SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetRemoteOn");
-	ICR8600SetRemoteOn(deviceData.WinusbHandle);
+	//Set parameters
 	SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetFrequency: %d", centerFrequency);
 	ICR8600SetFrequency(deviceData.WinusbHandle, centerFrequency);
 	SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetSampleRate: %d", sampleRate);
@@ -110,8 +108,6 @@ void SoapyICR8600::closeStream(SoapySDR::Stream *stream) {
 	this->deactivateStream(stream, 0, 0);
 	free(bufferData);
 	bufferData = NULL;
-
-	ICR8600SetRemoteOff(deviceData.WinusbHandle);
 }
 
 size_t SoapyICR8600::getStreamMTU(SoapySDR::Stream *stream) const {

@@ -315,6 +315,7 @@ BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG
 
 void ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetRemoteOn");
 	UCHAR remote_on_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x00, 0x01,  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, remote_on_cmd, sizeof(remote_on_cmd));
@@ -324,6 +325,7 @@ void ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 
 void ICR8600SetRemoteOff(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetRemoteOff");
 	ULONG sent = 0;
 	UCHAR remote_off_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x00, 0x00,  0xFD, 0xFF };
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, remote_off_cmd, sizeof(remote_off_cmd));
