@@ -31,6 +31,8 @@ void Sleep(int milliseconds)
 
 #endif
 
+#define decToBcd(val) (UCHAR)((((val) / 10 * 16) + ((val) % 10)))
+
 HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  BufLen, _Out_opt_ PBOOL  FailureDeviceNotFound);
 
 BOOL FindICR8600Device()
@@ -383,8 +385,6 @@ BOOL ICR8600SetSampleRate(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG sampleRat
 
 BOOL ICR8600SetFrequency(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG frequency)
 {
-	#define decToBcd(val) (UCHAR)((((val) / 10 * 16) + ((val) % 10)))
-
 	ULONG f1 = frequency % 100, f2 = (frequency / 100) % 100, f3 = (frequency / 10000) % 100, f4 = (frequency / 1000000) % 100, f5 = (frequency / 100000000) % 100;
 	UCHAR set_freq[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x05,  decToBcd(f1),decToBcd(f2),decToBcd(f3),decToBcd(f4),decToBcd(f5),  0xFD, 0xFF };
 	ULONG sent = 0;
@@ -412,4 +412,47 @@ ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULON
 	}
 #endif
 	return cbRead;
+}
+
+BOOL ICR8600SetPreAmpOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
+{
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetPreAmpOn");
+	UCHAR set_preamp[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x16, 0x02, 0x01, 0xFD, 0xFF };
+	ULONG sent = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_preamp, sizeof(set_preamp));
+	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
+	return TRUE;
+}
+
+BOOL ICR8600SetPreAmpOff(WINUSB_INTERFACE_HANDLE hDeviceHandle)
+{
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetPreAmpOff");
+	UCHAR set_preamp[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x16, 0x02, 0x00, 0xFD, 0xFF };
+	ULONG sent = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_preamp, sizeof(set_preamp));
+	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
+	return TRUE;
+}
+
+BOOL ICR8600SetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG gain)
+{
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetGainRF");
+	ULONG g1 = gain % 100, g2 = (gain / 100) % 100;
+	UCHAR set_gain[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x14, 0x02, decToBcd(g2), decToBcd(g1),  0xFD, 0xFF };
+	ULONG sent = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_gain, sizeof(set_gain));
+	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
+
+	return TRUE;
+}
+
+BOOL ICR8600SetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG atten)
+{
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetAttenuator");
+	UCHAR set_atten[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x11, decToBcd(atten), 0xFD, 0xFF };
+	ULONG sent = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_atten, sizeof(set_atten));
+	ReadFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, 64);
+
+	return TRUE;
 }

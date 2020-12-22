@@ -18,7 +18,26 @@ sdr = SoapySDR.Device(args)
 
 #query device info
 print("Antennas:", sdr.listAntennas(SOAPY_SDR_RX, 0))
-print("Gains:", sdr.listGains(SOAPY_SDR_RX, 0))
+
+# exercise gains
+gains = sdr.listGains(SOAPY_SDR_RX, 0)
+print("Gains:", gains)
+for gain in gains:
+	print("\t" + gain + " (min, max, step): " + str(sdr.getGainRange(SOAPY_SDR_RX, 0, gain)))
+
+sdr.setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 0.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 14.0)
+
+sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", 0.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -10.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -20.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -30.0)
+
+sdr.setGain(SOAPY_SDR_RX, 0, "RF", 0.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "RF", 128.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "RF", 255.0)
+
+
 freqs = sdr.getFrequencyRange(SOAPY_SDR_RX, 0)
 for freqRange in freqs: print(freqRange)
 
