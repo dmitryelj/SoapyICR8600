@@ -464,12 +464,35 @@ BOOL ICR8600SetFrequency(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG frequency)
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 }
 
-BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, int antennaIndex)
+//
+// Antenna commands, both Set and Get, will only work if the R8600
+// is tuned to the HF band, otherwise the R8600 will respond 'Invalid Command'
+//
+BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG antennaIndex)
 {
-	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x12, (UCHAR)antennaIndex,  0xFD, 0xFF };
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetAntenna");
+	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x12, (UCHAR)(antennaIndex & 0xff),  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+}
+
+BOOL ICR8600GetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG antennaIndex)
+{
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAntenna");
+	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x12, 0xFD };
+	ULONG sent = 0;
+	UCHAR response[64];
+	ULONG recv = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
+	recv = ReadBufferFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, response, sizeof(response));
+	if (recv == 8) {
+		*antennaIndex = (ULONG)response[5];
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAntenna Index = %d", *antennaIndex);
+		return true;
+	}
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAntenna Invalid Command");
+	return false;
 }
 
 ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULONG BufferLength) 
@@ -584,3 +607,4 @@ BOOL ICR8600GetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain)
 	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator Invalid Command");
 	return false;
 }
+

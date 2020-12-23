@@ -133,8 +133,27 @@ void SoapyICR8600::setAntenna(const int direction, const size_t channel, const s
 
 std::string SoapyICR8600::getAntenna(const int direction, const size_t channel) const
 {
-	std::vector<std::string> antennas = listAntennas(SOAPY_SDR_RX, 0);
-	return antennas[antennaIndex];
+	ULONG antennaIndex;
+	std::string antenna = "";
+
+	if (ICR8600GetAntenna(deviceData.WinusbHandle, &antennaIndex))
+	{
+		switch(antennaIndex)
+		{
+			case 0x00:
+				antenna = "ANT 1";
+				break;
+			case 0x01:
+				antenna = "ANT 2";
+				break;
+			case 0x02:
+				antenna = "ANT 3";
+				break;
+			default:
+				antenna = "";
+		}
+	}
+	return antenna;
 }
 
 /*******************************************************************
