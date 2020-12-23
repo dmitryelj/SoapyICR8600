@@ -49,7 +49,7 @@ SoapyICR8600::SoapyICR8600(const SoapySDR::Kwargs &args)
 	}
 
 	// Print a few parts of the device descriptor
-	SoapySDR_logf(SOAPY_SDR_INFO, "Device found: VID_%04X&PID_%04X; bcdUsb %04X\n", deviceDesc.idVendor, deviceDesc.idProduct, deviceDesc.bcdUSB);
+	SoapySDR_logf(SOAPY_SDR_INFO, "Device found: VID_%04X&PID_%04X; bcdUsb %04X", deviceDesc.idVendor, deviceDesc.idProduct, deviceDesc.bcdUSB);
 
 	// Need to enable I/Q Mode or other commands will not work
 	ICR8600SetRemoteOn(deviceData.WinusbHandle);

@@ -8,17 +8,30 @@ import ctypes
 
 # To test add path: set SOAPY_SDR_PLUGIN_PATH=C:\Users\DMITRII\SoapyICR8600\build\x64\Release;
 
+print()
+
 #enumerate devices
+print('Enumerating SoapySDR Devices')
 results = SoapySDR.Device.enumerate()
-for result in results: print(result)
+for result in results:
+	print(result)
+print('----------')
+print()
 
 #create device instance
 #args can be user defined or from the enumeration result
+print('Instantiating ICR8600')
 args = dict(driver="icr8600")
 sdr = SoapySDR.Device(args)
+print('----------')
+print()
 
+print('Get Frequency Range')
 freqs = sdr.getFrequencyRange(SOAPY_SDR_RX, 0)
-for freqRange in freqs: print(freqRange)
+for freqRange in freqs:
+	print(freqRange)
+print('----------')
+print()
 
 # set the frequency to the HF band
 sdr.setSampleRate(SOAPY_SDR_RX, 0, 240000)
