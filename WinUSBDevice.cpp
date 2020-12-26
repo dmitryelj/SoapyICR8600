@@ -38,6 +38,8 @@ HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  
 
 BOOL FindICR8600Device()
 {
+	SoapySDR_logf(SOAPY_SDR_TRACE, "FindICR8600Device");
+
 #ifdef _WIN32
 	DEVICE_DATA deviceData;
 	BOOL notFound = false;
@@ -101,6 +103,7 @@ BOOL FindICR8600Device()
 HRESULT OpenDevice(_Out_ PDEVICE_DATA DeviceData, _Out_opt_ PBOOL FailureDeviceNotFound)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "OpenDevice");
     HRESULT hr = S_OK;
     BOOL    bResult;
 
@@ -135,6 +138,7 @@ HRESULT OpenDevice(_Out_ PDEVICE_DATA DeviceData, _Out_opt_ PBOOL FailureDeviceN
     DeviceData->HandlesOpen = TRUE;
     return hr;
 #else
+    SoapySDR_logf(SOAPY_SDR_FATAL, "OpenDevice: Only WIN32 Supported");
     return 0;
 #endif
 }
@@ -142,14 +146,16 @@ HRESULT OpenDevice(_Out_ PDEVICE_DATA DeviceData, _Out_opt_ PBOOL FailureDeviceN
 BOOL GetDeviceDescriptor(WINUSB_INTERFACE_HANDLE hDeviceHandle, _Out_ USB_DEVICE_DESCRIPTOR *pDeviceDesc)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "GetDeviceDescriptor");
     ULONG lengthReceived;
 	BOOL bResult = WinUsb_GetDescriptor(hDeviceHandle, USB_DEVICE_DESCRIPTOR_TYPE, 0, 0, (PBYTE)pDeviceDesc, sizeof(USB_DEVICE_DESCRIPTOR), &lengthReceived);
 	if (FALSE == bResult || lengthReceived != sizeof(USB_DEVICE_DESCRIPTOR)) {
-		printf("Error among LastError %d or lengthReceived %d\n", FALSE == bResult ? GetLastError() : 0, lengthReceived);
+		SoapySDR_logf(SOAPY_SDR_ERROR, "GetDeviceDescriptor: Error among LastError %d or lengthReceived %d", FALSE == bResult ? GetLastError() : 0, lengthReceived);
 		return FALSE;
 	}
 	return TRUE;
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "GetDeviceDescriptor: Only WIN32 Supported");
     return FALSE;
 #endif
 }
@@ -157,6 +163,7 @@ BOOL GetDeviceDescriptor(WINUSB_INTERFACE_HANDLE hDeviceHandle, _Out_ USB_DEVICE
 VOID CloseDevice(_Inout_ PDEVICE_DATA DeviceData)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "CloseDevice");
     if (FALSE == DeviceData->HandlesOpen) {
         //
         // Called on an uninitialized DeviceData
@@ -169,6 +176,7 @@ VOID CloseDevice(_Inout_ PDEVICE_DATA DeviceData)
     DeviceData->HandlesOpen = FALSE;
 	DeviceData->DeviceHandle = INVALID_HANDLE_VALUE;
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "CloseDevice: Only WIN32 Supported");
     return;
 #endif
 }
@@ -176,6 +184,7 @@ VOID CloseDevice(_Inout_ PDEVICE_DATA DeviceData)
 HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  BufLen, _Out_opt_ PBOOL  FailureDeviceNotFound)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "RetrieveDevicePath");
     CONFIGRET cr = CR_SUCCESS;
     HRESULT   hr = S_OK;
     PTSTR     DeviceInterfaceList = NULL;
@@ -254,6 +263,7 @@ HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  
 
     return hr;
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "RetrieveDevicePath: Only WIN32 Supported");
     return 0;
 #endif
 }
@@ -261,7 +271,9 @@ HRESULT RetrieveDevicePath(_Out_bytecap_(BufLen) LPTSTR DevicePath, _In_ ULONG  
 BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG* pcbWritten, PUCHAR send, ULONG cbSize)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "WriteToBulkEndpoint");
 	if (hDeviceHandle == INVALID_HANDLE_VALUE || !pcbWritten) {
+		SoapySDR_logf(SOAPY_SDR_FATAL, "WriteToBulkEndpoint: Invalid Handle");
 		return FALSE;
 	}
 
@@ -270,12 +282,16 @@ BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG*
 	ULONG cbSent = 0;
 	bResult = WinUsb_WritePipe(hDeviceHandle, ID, send, cbSize, &cbSent, 0);
 	if (bResult) {
-		printf("WriteToBulkEndpoint 0x%x: %d bytes, actual data transferred: %d.\n", ID, cbSize, cbSent);
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "WriteToBulkEndpoint: 0x%x: %d bytes, actual data transferred: %d", ID, cbSize, cbSent);
 		*pcbWritten = cbSent;
+	}
+	else {
+		SoapySDR_logf(SOAPY_SDR_ERROR, "WriteToBulkEndpoint: WinUsb_WritePipe Failed");
 	}
 
 	return bResult;
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "WriteToBulkEndpoint: Only WIN32 Supported");
     return FALSE;
 #endif
 }
@@ -283,7 +299,9 @@ BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG*
 BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG cbSize)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ReadFromBulkEndpoint");
 	if (hDeviceHandle == INVALID_HANDLE_VALUE) {
+		SoapySDR_logf(SOAPY_SDR_FATAL, "ReadFromBulkEndpoint: Invalid Handle");
 		return FALSE;
 	}
 
@@ -295,23 +313,27 @@ BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG
 		if (cbRead == 6) {
 			// FE FE E0 96 FB FD - OK
 			if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFB)
-				printf("ReadFromBulkEndpoint: OK\n");
+				SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint: OK");
 			// FE FE E0 96 FA FD - Fail
 			else if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFA)
-				printf("ReadFromBulkEndpoint: Fail\n");
+				SoapySDR_logf(SOAPY_SDR_ERROR, "ReadFromBulkEndpoint: Fail");
 			else
-				printf("ReadFromBulkEndpoint output: %Xh %Xh %Xh %Xh %Xh %Xh\n", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
+				SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint: output %Xh %Xh %Xh %Xh %Xh %Xh", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
 		}
 		else {
 			// printf("ReadFromBulkEndpoint: pipe 0x%x: size %d, actual data read: %d.\n", ID, cbSize, cbRead);
-			printf("ReadFromBulkEndpoint output (%d): %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh\n", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
+			SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint output (%d): %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
 				szBuffer[8], szBuffer[9], szBuffer[10], szBuffer[11], szBuffer[12], szBuffer[13], szBuffer[14], szBuffer[15]);
 		}
+	}
+	else {
+		SoapySDR_logf(SOAPY_SDR_ERROR, "ReadFromBulkEndpoint: WinUsb_ReadPipe Failed");
 	}
 
 	LocalFree(szBuffer);
 	return bResult;
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "ReadFromBulkEndpoint: Only WIN32 Supported");
     return FALSE;
 #endif
 }
@@ -320,18 +342,25 @@ BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG
 ULONG ReadBufferFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, PUCHAR szBuffer, ULONG cbSize)
 {
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ReadBufferFromBulkEndpoint");
 	if (hDeviceHandle == INVALID_HANDLE_VALUE) {
+		SoapySDR_logf(SOAPY_SDR_FATAL, "ReadBufferFromBulkEndpoint: Invalid Handle");
 		return FALSE;
 	}
 
 	BOOL bResult = TRUE;
 	ULONG cbRead = 0;
 	bResult = WinUsb_ReadPipe(hDeviceHandle, ID, szBuffer, cbSize, &cbRead, 0);
-	if (bResult)
+	if (bResult) {
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadBufferFromBulkEndpoint: Read %d", cbRead);
 		return cbRead;
-	else
+	}
+	else {
+		SoapySDR_logf(SOAPY_SDR_ERROR, "ReadBufferFromBulkEndpoint: WinUsb_ReadPipe Failed");
 		return 0;
+	}
 #else
+	SoapySDR_logf(SOAPY_SDR_FATAL, "ReadBufferFromBulkEndpoint: Only WIN32 Supported");
     return 0;
 #endif
 }
@@ -340,9 +369,9 @@ ULONG ReadBufferFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID
 BOOL GetAck(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID)
 {
 #ifdef _WIN32
-
+	SoapySDR_logf(SOAPY_SDR_TRACE, "GetAck");
 	if (hDeviceHandle == INVALID_HANDLE_VALUE) {
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: INVALID_HANDLE_VALUE");
+		SoapySDR_logf(SOAPY_SDR_FATAL, "GetAck: Invalid Handle");
 		return FALSE;
 	}
 
@@ -359,29 +388,29 @@ BOOL GetAck(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID)
 			// FE FE E0 96 FA FD - Fail
 			else if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFA)
 			{
-				SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: Invalid Command");
+				SoapySDR_logf(SOAPY_SDR_ERROR, "GetAck: Invalid Command");
 				bResult = false;
 			}
 			else
 			{
-				SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: Unexpected Response %Xh %Xh %Xh %Xh %Xh %Xh\n", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
+				SoapySDR_logf(SOAPY_SDR_ERROR, "GetAck: Unexpected Response %Xh %Xh %Xh %Xh %Xh %Xh", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
 				bResult = false;
 			}
 		}
 		else {
-			SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: Unexpected Response (%d) %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh\n", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
+			SoapySDR_logf(SOAPY_SDR_ERROR, "GetAck: Unexpected Response (%d) %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
 				szBuffer[8], szBuffer[9], szBuffer[10], szBuffer[11], szBuffer[12], szBuffer[13], szBuffer[14], szBuffer[15]);
 				bResult = false;
 		}
 	}
 	else {
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: WinUsb_ReadPipe Failed");
+		SoapySDR_logf(SOAPY_SDR_FATAL, "GetAck: WinUsb_ReadPipe Failed");
 	}
 
 	LocalFree(szBuffer);
 	return bResult;
 #else
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: Not _WIN32");
+	SoapySDR_logf(SOAPY_SDR_ERROR, "GetAck: Only WIN32 Supported");
     return FALSE;
 #endif
 }
@@ -389,26 +418,38 @@ BOOL GetAck(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID)
 
 BOOL ICR8600SetRemoteOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetRemoteOn");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetRemoteOn");
 	UCHAR remote_on_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x00, 0x01,  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, remote_on_cmd, sizeof(remote_on_cmd));
 	Sleep(100);
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetRemoteOn: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetRemoteOff(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetRemoteOff");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetRemoteOff");
 	ULONG sent = 0;
 	UCHAR remote_off_cmd[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x00, 0x00,  0xFD, 0xFF };
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, remote_off_cmd, sizeof(remote_off_cmd));
 	Sleep(100);
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetRemoteOff: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetSampleRate(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG sampleRate)
 {
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetSampleRate");
 	UCHAR iq_5120_16bit[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x01, 0x01, 0x00, 0x01,  0xFD, 0xFF };
 	UCHAR iq_3840_16bit[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x01, 0x01, 0x00, 0x02,  0xFD, 0xFF };
 	UCHAR iq_1920_16bit[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x01, 0x01, 0x00, 0x03,  0xFD, 0xFF };
@@ -417,112 +458,186 @@ BOOL ICR8600SetSampleRate(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG sampleRat
 	UCHAR iq_240_16bit[]  = { 0xFE, 0xFE, 0x96, 0xE0,  0x1A, 0x13, 0x01, 0x01, 0x00, 0x06,  0xFD, 0xFF };
 	ULONG sent = 0;
 	if (sampleRate == 240000) {
-		printf("240000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 240000");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_240_16bit, sizeof(iq_240_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
 	if (sampleRate == 480000) {
-		printf("480000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 480000\n");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_480_16bit, sizeof(iq_480_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
 	if (sampleRate == 960000) {
-		printf("960000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 960000\n");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_960_16bit, sizeof(iq_960_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
 	if (sampleRate == 1920000) {
-		printf("1920000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 1920000\n");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_1920_16bit, sizeof(iq_1920_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
 	if (sampleRate == 3840000) {
-		printf("3840000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 3840000\n");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_3840_16bit, sizeof(iq_3840_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
 	if (sampleRate == 5120000) {
-		printf("5120000\n");
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetSampleRate: 5120000\n");
 		WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, iq_5120_16bit, sizeof(iq_5120_16bit));
 		Sleep(100);
 		return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 	}
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetSampleRate: Undefined Sample Rate"); 
 	return FALSE;
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetSampleRate: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetFrequency(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG frequency)
 {
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetFrequency");
 	ULONG f1 = frequency % 100, f2 = (frequency / 100) % 100, f3 = (frequency / 10000) % 100, f4 = (frequency / 1000000) % 100, f5 = (frequency / 100000000) % 100;
 	UCHAR set_freq[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x05,  decToBcd(f1),decToBcd(f2),decToBcd(f3),decToBcd(f4),decToBcd(f5),  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_freq, sizeof(set_freq));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetFrequency: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
-BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, int antennaIndex)
+//
+// Antenna commands, both Set and Get, will only work if the R8600
+// is tuned to the HF band, otherwise the R8600 will respond 'Invalid Command'
+//
+BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG antennaIndex)
 {
-	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x12, (UCHAR)antennaIndex,  0xFD, 0xFF };
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetAntenna");
+	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x12, (UCHAR)(antennaIndex & 0xff),  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetAntenna: Only WIN32 Supported");
+    return FALSE;
+#endif
+}
+
+BOOL ICR8600GetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG antennaIndex)
+{
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600GetAntenna");
+	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x12, 0xFD };
+	ULONG sent = 0;
+	UCHAR response[64];
+	ULONG recv = 0;
+	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
+	recv = ReadBufferFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, response, sizeof(response));
+	if (recv == 8) {
+		*antennaIndex = (ULONG)response[5];
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAntenna: Index = %d", *antennaIndex);
+		return true;
+	}
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAntenna: Invalid Command");
+	return false;
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600GetAntenna: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULONG BufferLength) 
 {
-	ULONG cbRead = 0;
 #ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600ReadPipe");
+	ULONG cbRead = 0;
 	BOOL bResult = WinUsb_ReadPipe(hDeviceHandle, PIPE_IQ_ID, Buffer, BufferLength, &cbRead, 0);
 	if (bResult) {
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600ReadPipe: Read %d", cbRead);
+		return cbRead;
 	}
+	else {
+		SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600ReadPipe: WinUsb_ReadPipe Failed");
+		return 0;
+	}
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600ReadPipe: Only WIN32 Supported");
+	return 0;
 #endif
-	return cbRead;
 }
 
 BOOL ICR8600SetPreAmpOn(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetPreAmpOn");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetPreAmpOn");
 	UCHAR set_preamp[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x16, 0x02, 0x01, 0xFD };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_preamp, sizeof(set_preamp));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetPreAmpOn: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetPreAmpOff(WINUSB_INTERFACE_HANDLE hDeviceHandle)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetPreAmpOff");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetPreAmpOff");
 	UCHAR set_preamp[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x16, 0x02, 0x00, 0xFD };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_preamp, sizeof(set_preamp));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetPreAmpOff: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG gain)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetGainRF");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetGainRF");
 	ULONG g1 = gain % 100, g2 = (gain / 100) % 100;
 	UCHAR set_gain[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x14, 0x02, decToBcd(g2), decToBcd(g1),  0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_gain, sizeof(set_gain));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetGainRF: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600SetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG atten)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetAttenuator");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetAttenuator");
 	UCHAR set_atten[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x11, decToBcd(atten), 0xFD, 0xFF };
 	ULONG sent = 0;
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_atten, sizeof(set_atten));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600SetAttenuator: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600GetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetGainRF");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600GetGainRF");
 	UCHAR set_gain[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x14, 0x02, 0xFD, 0xFF };
 	UCHAR response[64];
 	ULONG sent = 0;
@@ -533,16 +648,21 @@ BOOL ICR8600GetGainRF(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain)
 		ULONG g1 = bcdToDec(response[6]);
 		ULONG g2 = bcdToDec(response[7]);
 		*gain = (g1 * 100) +  g2;
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetGainRF RF Gain = %d", *gain);
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetGainRF: RF Gain = %d", *gain);
 		return true;
 	}
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetGainRF Invalid Command");
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetGainRF: Invalid Command");
 	return false;
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600GetGainRF: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600GetPreAmpState(WINUSB_INTERFACE_HANDLE hDeviceHandle, PBOOL on)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600GetPreAmpState");
 	UCHAR set_preamp[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x16, 0x02, 0xFD, 0xFF };
 	UCHAR response[64];
 	ULONG sent = 0;
@@ -552,24 +672,29 @@ BOOL ICR8600GetPreAmpState(WINUSB_INTERFACE_HANDLE hDeviceHandle, PBOOL on)
 	if (recv == 8) {
 		if (response[6] == 0x00) {
 			*on = false;
-			SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState OFF");
+			SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState: OFF");
 			return true;
 		}
 		else if (response[6] == 0x01) {
 			*on = true;
-			SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState ON");
+			SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState: ON");
 			return true;
 		}
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState Unexpected Response %Xh", response[6]);
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState: Unexpected Response %Xh", response[6]);
 		return false;
 	}
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState Invalid Command %d", recv);
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetPreAmpState: Invalid Command %d", recv);
 	return false;
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600GetPreAmpState: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
 
 BOOL ICR8600GetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain)
 {
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator");
+#ifdef _WIN32
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600GetAttenuator");
 	UCHAR set_gain[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x11, 0xFD };
 	UCHAR response[64];
 	ULONG sent = 0;
@@ -578,9 +703,14 @@ BOOL ICR8600GetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, PULONG gain)
 	recv = ReadBufferFromBulkEndpoint(hDeviceHandle, PIPE_RESPONSE_ID, response, sizeof(response));
 	if (recv == 8) {
 		*gain = bcdToDec(response[5]);
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator Gain = %d", *gain);
+		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator: Gain = %d", *gain);
 		return true;
 	}
-	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator Invalid Command");
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600GetAttenuator: Invalid Command");
 	return false;
+#else
+	SoapySDR_logf(SOAPY_SDR_ERROR, "ICR8600GetAttenuator: Only WIN32 Supported");
+    return FALSE;
+#endif
 }
+

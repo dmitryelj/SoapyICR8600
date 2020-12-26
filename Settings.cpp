@@ -49,7 +49,7 @@ SoapyICR8600::SoapyICR8600(const SoapySDR::Kwargs &args)
 	}
 
 	// Print a few parts of the device descriptor
-	SoapySDR_logf(SOAPY_SDR_INFO, "Device found: VID_%04X&PID_%04X; bcdUsb %04X\n", deviceDesc.idVendor, deviceDesc.idProduct, deviceDesc.bcdUSB);
+	SoapySDR_logf(SOAPY_SDR_INFO, "Device found: VID_%04X&PID_%04X; bcdUsb %04X", deviceDesc.idVendor, deviceDesc.idProduct, deviceDesc.bcdUSB);
 
 	// Need to enable I/Q Mode or other commands will not work
 	ICR8600SetRemoteOn(deviceData.WinusbHandle);
@@ -133,8 +133,27 @@ void SoapyICR8600::setAntenna(const int direction, const size_t channel, const s
 
 std::string SoapyICR8600::getAntenna(const int direction, const size_t channel) const
 {
-	std::vector<std::string> antennas = listAntennas(SOAPY_SDR_RX, 0);
-	return antennas[antennaIndex];
+	ULONG antennaIndex;
+	std::string antenna = "";
+
+	if (ICR8600GetAntenna(deviceData.WinusbHandle, &antennaIndex))
+	{
+		switch(antennaIndex)
+		{
+			case 0x00:
+				antenna = "ANT 1";
+				break;
+			case 0x01:
+				antenna = "ANT 2";
+				break;
+			case 0x02:
+				antenna = "ANT 3";
+				break;
+			default:
+				antenna = "";
+		}
+	}
+	return antenna;
 }
 
 /*******************************************************************

@@ -8,17 +8,41 @@ import ctypes
 
 # To test add path: set SOAPY_SDR_PLUGIN_PATH=C:\Users\DMITRII\SoapyICR8600\build\x64\Release;
 
+print()
+
 #enumerate devices
+print('Enumerating SoapySDR Devices')
 results = SoapySDR.Device.enumerate()
-for result in results: print(result)
+for result in results:
+	print(result)
+print('----------')
+print()
 
 #create device instance
 #args can be user defined or from the enumeration result
+print('Instantiating ICR8600')
 args = dict(driver="icr8600")
 sdr = SoapySDR.Device(args)
+print('----------')
+print()
 
-#query device info
-print("Antennas:", sdr.listAntennas(SOAPY_SDR_RX, 0))
+print('Get Frequency Range')
+freqs = sdr.getFrequencyRange(SOAPY_SDR_RX, 0)
+for freqRange in freqs:
+	print(freqRange)
+print('----------')
+print()
+
+# set the frequency to the HF band
+sdr.setSampleRate(SOAPY_SDR_RX, 0, 240000)
+sdr.setFrequency(SOAPY_SDR_RX, 0, 10000000)
+
+# antennas 
+antennas = sdr.listAntennas(SOAPY_SDR_RX, 0)
+print("Antennas:", antennas)
+for antenna in antennas:
+	sdr.setAntenna(SOAPY_SDR_RX, 0, antenna)
+	print("\tAntenna Readback = " + sdr.getAntenna(SOAPY_SDR_RX, 0))
 
 # exercise gains
 gains = sdr.listGains(SOAPY_SDR_RX, 0)
@@ -46,13 +70,6 @@ sdr.setGain(SOAPY_SDR_RX, 0, "RF", 128.0)
 print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
 sdr.setGain(SOAPY_SDR_RX, 0, "RF", 255.0)
 print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
-
-freqs = sdr.getFrequencyRange(SOAPY_SDR_RX, 0)
-for freqRange in freqs: print(freqRange)
-
-#apply settings
-sdr.setSampleRate(SOAPY_SDR_RX, 0, 240000)
-sdr.setFrequency(SOAPY_SDR_RX, 0, 102100000)
 
 #setup a stream (complex floats)
 rxStream = sdr.setupStream(SOAPY_SDR_RX, "CS16")
