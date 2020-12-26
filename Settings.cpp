@@ -231,16 +231,24 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const std:
 
 	if (name == "RF")
 	{
-		ICR8600SetGainRF(deviceData.WinusbHandle, ULONG(int(value)));
+		// set = 4*(gain(dB) + 63.75)
+		// RF Gain Range 0dB (max) to -63.75dB (min)
+		// from observation, have not found this specified
+		ULONG s;
+		s = (ULONG)(int(4.0*(value + 63.75)));
+		SoapySDR_logf(SOAPY_SDR_INFO, "Setting RF Gain: %.2f dB (%d)", value, s);
+		ICR8600SetGainRF(deviceData.WinusbHandle, s);
 	}
 	else if (name == "PRE-AMP")
 	{
 		if (value > 0)
 		{
+			SoapySDR_logf(SOAPY_SDR_INFO, "Setting Pre-Amp Gain: %.2f dB (ON)", value);
 			ICR8600SetPreAmpOn(deviceData.WinusbHandle);
 		}
 		else
 		{
+			SoapySDR_logf(SOAPY_SDR_INFO, "Setting Pre-Amp Gain: %.2f dB (OFF)", value);
 			ICR8600SetPreAmpOff(deviceData.WinusbHandle);			
 		}
 	}
@@ -248,6 +256,7 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const std:
 	{
 		// give the attenuator a positive attenuation value
 		ULONG atten = (ULONG)(int(-1.0 * value));
+		SoapySDR_logf(SOAPY_SDR_INFO, "Setting Attenuator Gain: %.2f dB (%d)", value, atten);
 		ICR8600SetAttenuator(deviceData.WinusbHandle, atten);
 	}
 	else
@@ -261,11 +270,18 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const std:
 
 double SoapyICR8600::getGain(const int direction, const size_t channel, const std::string &name) const
 {
-	ULONG gain;
+	ULONG set;
+	double gain;
+
 	if (name == "RF")
 	{
-		if (ICR8600GetGainRF(deviceData.WinusbHandle, &gain))
+		if (ICR8600GetGainRF(deviceData.WinusbHandle, &set))
 		{
+			// gain(dB) = 0.25*set - 63.75
+			// RF Gain Range 0dB (max) to -63.75dB (min)
+			// from observation, have not found this specified
+			gain = 0.25 * (double)set - 63.75;
+			SoapySDR_logf(SOAPY_SDR_INFO, "Getting RF Gain: %f dB (%d)", gain, set);
 			return (double)gain;
 		}
 		else
@@ -280,9 +296,15 @@ double SoapyICR8600::getGain(const int direction, const size_t channel, const st
 		if (ICR8600GetPreAmpState(deviceData.WinusbHandle, &on))
 		{
 			if (on)
+			{
+				SoapySDR_logf(SOAPY_SDR_INFO, "Getting Pre-Amp Gain: 14.0 dB (ON)");
 				return(14.0);
+			}
 			else
+			{
+				SoapySDR_logf(SOAPY_SDR_INFO, "Getting Pre-Amp Gain: 0.0 dB (OFF)");
 				return(0.0);
+			}
 		}
 		else
 		{
@@ -291,11 +313,12 @@ double SoapyICR8600::getGain(const int direction, const size_t channel, const st
 	}
 	else if (name == "ATTENUATOR")
 	{
-		if (ICR8600GetAttenuator(deviceData.WinusbHandle, &gain))
+		if (ICR8600GetAttenuator(deviceData.WinusbHandle, &set))
 		{
-			if (gain != 0)
+			SoapySDR_logf(SOAPY_SDR_INFO, "Getting Attenuator Gain: %.2f dB (%d)", -1.0 * (double)set, set);
+			if (set != 0)
 				// convert to negative
-				return -1.0*(double)gain;
+				return -1.0*(double)set;
 			else
 				return 0.0;
 		}
@@ -325,7 +348,7 @@ SoapySDR::Range SoapyICR8600::getGainRange(const int direction, const size_t cha
 {
 	if (name == "RF")
 	{
-		return SoapySDR::Range(0.0, 255.0, 1.0);
+		return SoapySDR::Range(-63.75, 0.0, 0.25);
 	}
 	else if (name == "PRE-AMP")
 	{

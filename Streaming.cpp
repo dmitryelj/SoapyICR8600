@@ -128,7 +128,7 @@ int SoapyICR8600::deactivateStream(SoapySDR::Stream *stream, const int flags, co
 }
 
 int SoapyICR8600::readStream(SoapySDR::Stream *stream, void * const *buffs, const size_t numElems, int &flags, long long &timeNs, const long timeoutUs) {
-	SoapySDR_logf(SOAPY_SDR_INFO, "SoapyICR8600::readStream: %d, flags: %d", numElems, flags);
+	SoapySDR_logf(SOAPY_SDR_TRACE, "SoapyICR8600::readStream: %d, flags: %d", numElems, flags);
 
 	ULONG cbRead = ICR8600ReadPipe(deviceData.WinusbHandle, bufferData, bufferLength);
 	int16_t *source = (int16_t *)bufferData;

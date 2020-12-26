@@ -282,7 +282,7 @@ BOOL WriteToBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG*
 	ULONG cbSent = 0;
 	bResult = WinUsb_WritePipe(hDeviceHandle, ID, send, cbSize, &cbSent, 0);
 	if (bResult) {
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "WriteToBulkEndpoint: 0x%x: %d bytes, actual data transferred: %d", ID, cbSize, cbSent);
+		SoapySDR_logf(SOAPY_SDR_TRACE, "WriteToBulkEndpoint: 0x%x: %d bytes, actual data transferred: %d", ID, cbSize, cbSent);
 		*pcbWritten = cbSent;
 	}
 	else {
@@ -313,16 +313,16 @@ BOOL ReadFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID, ULONG
 		if (cbRead == 6) {
 			// FE FE E0 96 FB FD - OK
 			if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFB)
-				SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint: OK");
+				SoapySDR_logf(SOAPY_SDR_TRACE, "ReadFromBulkEndpoint: OK");
 			// FE FE E0 96 FA FD - Fail
 			else if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFA)
 				SoapySDR_logf(SOAPY_SDR_ERROR, "ReadFromBulkEndpoint: Fail");
 			else
-				SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint: output %Xh %Xh %Xh %Xh %Xh %Xh", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
+				SoapySDR_logf(SOAPY_SDR_TRACE, "ReadFromBulkEndpoint: output %Xh %Xh %Xh %Xh %Xh %Xh", szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5]);
 		}
 		else {
 			// printf("ReadFromBulkEndpoint: pipe 0x%x: size %d, actual data read: %d.\n", ID, cbSize, cbRead);
-			SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadFromBulkEndpoint output (%d): %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
+			SoapySDR_logf(SOAPY_SDR_TRACE, "ReadFromBulkEndpoint output (%d): %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh  %Xh %Xh %Xh %Xh", cbRead, szBuffer[0], szBuffer[1], szBuffer[2], szBuffer[3], szBuffer[4], szBuffer[5], szBuffer[6], szBuffer[7],
 				szBuffer[8], szBuffer[9], szBuffer[10], szBuffer[11], szBuffer[12], szBuffer[13], szBuffer[14], szBuffer[15]);
 		}
 	}
@@ -352,7 +352,7 @@ ULONG ReadBufferFromBulkEndpoint(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID
 	ULONG cbRead = 0;
 	bResult = WinUsb_ReadPipe(hDeviceHandle, ID, szBuffer, cbSize, &cbRead, 0);
 	if (bResult) {
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "ReadBufferFromBulkEndpoint: Read %d", cbRead);
+		SoapySDR_logf(SOAPY_SDR_TRACE, "ReadBufferFromBulkEndpoint: Read %d", cbRead);
 		return cbRead;
 	}
 	else {
@@ -384,7 +384,7 @@ BOOL GetAck(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR ID)
 		if (cbRead == 6) {
 			// FE FE E0 96 FB FD - OK
 			if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFB)
-				SoapySDR_logf(SOAPY_SDR_DEBUG, "GetAck: Valid Command");
+				SoapySDR_logf(SOAPY_SDR_TRACE, "GetAck: Valid Command");
 			// FE FE E0 96 FA FD - Fail
 			else if (szBuffer[3] == 0x96 && szBuffer[4] == 0xFA)
 			{
@@ -526,6 +526,7 @@ BOOL ICR8600SetAntenna(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG antennaIndex
 	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetAntenna");
 	UCHAR set_ant[] = { 0xFE, 0xFE, 0x96, 0xE0, 0x12, (UCHAR)(antennaIndex & 0xff),  0xFD, 0xFF };
 	ULONG sent = 0;
+	SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600SetAntenna: Index = %d", antennaIndex);
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_ant, sizeof(set_ant));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 #else
@@ -564,7 +565,7 @@ ULONG ICR8600ReadPipe(WINUSB_INTERFACE_HANDLE hDeviceHandle, PUCHAR Buffer, ULON
 	ULONG cbRead = 0;
 	BOOL bResult = WinUsb_ReadPipe(hDeviceHandle, PIPE_IQ_ID, Buffer, BufferLength, &cbRead, 0);
 	if (bResult) {
-		SoapySDR_logf(SOAPY_SDR_DEBUG, "ICR8600ReadPipe: Read %d", cbRead);
+		SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600ReadPipe: Read %d", cbRead);
 		return cbRead;
 	}
 	else {
@@ -626,6 +627,7 @@ BOOL ICR8600SetAttenuator(WINUSB_INTERFACE_HANDLE hDeviceHandle, ULONG atten)
 	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetAttenuator");
 	UCHAR set_atten[] = { 0xFE, 0xFE, 0x96, 0xE0,  0x11, decToBcd(atten), 0xFD, 0xFF };
 	ULONG sent = 0;
+	SoapySDR_logf(SOAPY_SDR_TRACE, "ICR8600SetAttenuator: Attenuator = %d", atten);
 	WriteToBulkEndpoint(hDeviceHandle, PIPE_CONTROL_ID, &sent, set_atten, sizeof(set_atten));
 	return GetAck(hDeviceHandle, PIPE_RESPONSE_ID);
 #else
