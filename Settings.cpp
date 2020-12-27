@@ -215,15 +215,68 @@ bool SoapyICR8600::getGainMode(const int direction, const size_t channel) const
 	return false;
 }
 
-// removed for now
-// may add back in later...
-//
-//void SoapyICR8600::setGain(const int direction, const size_t channel, const double value)
-//{
-//	//set the overall gain by distributing it across available gain elements
-//	//OR delete this function to use SoapySDR's default gain distribution algorithm...
-//	SoapySDR::Device::setGain(direction, channel, value);
-//}
+void SoapyICR8600::setGain(const int direction, const size_t channel, const double value)
+{
+	//set the overall gain by distributing it across available gain elements
+
+	// RF Gain -63.75dB to 0dB
+	// Pre-Amp 0dB to 14db
+	// Attenuator -30dB to 0dB
+	// 
+	// Min Gain = (-63.75) + (0) + (-30) = -93.75
+	// Max Gain = (0) + (14) + 0 = 14dB
+
+	// Strategy...
+	// 0dB is nominal
+	// 0dB to 14dB Pre-Amp
+	// -30dB to 0 dB Attenuator
+	// < -30dB RF Gain 
+
+	double gain = value;
+
+	if (gain > 0.0)
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 14.0);
+		gain -= 14.0;
+	}
+	else
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "PRE-AMP", 0.0);
+		gain -= 0.0;		
+	}
+
+	if (gain <= -30.0)
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -30.0);
+		gain += 30.0;		
+	}
+	else if (gain <= -20)
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -20.0);
+		gain += 20.0;
+	}
+	else if (gain <= -10.0)
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", -10.0);
+		gain += 10.0;
+	}
+	else
+	{
+		this->setGain(SOAPY_SDR_RX, 0, "ATTENUATOR", 0.0);
+		gain += 0.0;		
+	}
+
+	if (gain < -63.75)
+	{
+		gain = -63.75;
+	}
+	else if (gain > 0.0)
+	{
+		gain = 0.0;
+	}
+
+	this->setGain(SOAPY_SDR_RX, 0, "RF", gain);
+}
 
 void SoapyICR8600::setGain(const int direction, const size_t channel, const std::string &name, const double value)
 {
@@ -266,6 +319,16 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const std:
 		// SoapySDR_logf(SOAPY_SDR_DEBUG, "Setting RTL-SDR IF Gain for stage %d: %f", stage, IFGain[stage - 1]);
 		// throw std::runtime_error("Invalid IF stage, 1 or 1-6 for E4000");
 	}
+}
+
+double SoapyICR8600::getGain(const int direction, const size_t channel) const
+{
+	double gain = 0;
+
+	gain += getGain(direction, channel, "PRE-AMP");
+	gain += getGain(direction, channel, "ATTENUATOR");
+	gain += getGain(direction, channel, "RF");
+	return gain;
 }
 
 double SoapyICR8600::getGain(const int direction, const size_t channel, const std::string &name) const
@@ -337,12 +400,15 @@ double SoapyICR8600::getGain(const int direction, const size_t channel, const st
 	return 0;
 }
 
-// removed for now
-// may add back in later...
-//
-//SoapySDR::Range SoapyICR8600::getGainRange(const int direction, const size_t channel) const {
-//	return SoapySDR::Range(0.0, 32.0);
-//}
+SoapySDR::Range SoapyICR8600::getGainRange(const int direction, const size_t channel) const {
+	// RF Gain -63.75dB to 0dB
+	// Pre-Amp 0dB to 14db
+	// Attenuator -30dB to 0dB
+	// 
+	// Min Gain = (-63.75) + (0) + (-30) = -93.75
+	// Max Gain = (0) + (14) + 0 = 14dB
+	return SoapySDR::Range(-93.75, 14.0);
+}
 
 SoapySDR::Range SoapyICR8600::getGainRange(const int direction, const size_t channel, const std::string &name) const
 {
