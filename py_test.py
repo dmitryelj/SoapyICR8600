@@ -66,9 +66,9 @@ print("Attenuator Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "ATTENUATOR"))
 
 sdr.setGain(SOAPY_SDR_RX, 0, "RF", 0.0)
 print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
-sdr.setGain(SOAPY_SDR_RX, 0, "RF", 128.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "RF", -32.0)
 print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
-sdr.setGain(SOAPY_SDR_RX, 0, "RF", 255.0)
+sdr.setGain(SOAPY_SDR_RX, 0, "RF", -63.75)
 print("RF Gain Readback = " + str(sdr.getGain(SOAPY_SDR_RX, 0, "RF")))
 
 #setup a stream (complex floats)
