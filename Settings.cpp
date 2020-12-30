@@ -117,18 +117,29 @@ void SoapyICR8600::setAntenna(const int direction, const size_t channel, const s
 		throw std::runtime_error("setAntena failed: RTL-SDR only supports RX");
 	}
 
-	if (name == "ANT 1") {
-		antennaIndex = 0;
-		ICR8600SetAntenna(deviceData.WinusbHandle, 0);
+	// On the R8600,
+	// Antenna commands only function in the HF region
+	// ANT 1 is automatically selected outside the HF region
+	if (centerFrequency < 30000000) {
+		if (name == "ANT 1") {
+			antennaIndex = 0;
+			ICR8600SetAntenna(deviceData.WinusbHandle, 0);
+		}
+		else if (name == "ANT 2") {
+			antennaIndex = 1;
+			ICR8600SetAntenna(deviceData.WinusbHandle, 1);
+		}
+		else if (name == "ANT 3") {
+			antennaIndex = 2;
+			ICR8600SetAntenna(deviceData.WinusbHandle, 2);
+		}		
 	}
-	else if (name == "ANT 2") {
-		antennaIndex = 1;
-		ICR8600SetAntenna(deviceData.WinusbHandle, 1);
+	else {
+		if (name != "ANT 1") {
+			SoapySDR_logf(SOAPY_SDR_ERROR, "setAntenna %s invalid for frequency %d", name, centerFrequency);
+		}
 	}
-	else if (name == "ANT 3") {
-		antennaIndex = 2;
-		ICR8600SetAntenna(deviceData.WinusbHandle, 2);
-	}
+
 }
 
 std::string SoapyICR8600::getAntenna(const int direction, const size_t channel) const
@@ -136,7 +147,13 @@ std::string SoapyICR8600::getAntenna(const int direction, const size_t channel) 
 	ULONG antennaIndex;
 	std::string antenna = "";
 
-	if (ICR8600GetAntenna(deviceData.WinusbHandle, &antennaIndex))
+	// On the R8600,
+	// Antenna commands only function in the HF region
+	// ANT 1 is automatically selected outside the HF region
+	if (centerFrequency >= 30000000) {
+		antenna = "ANT 1";		
+	}
+	else if (ICR8600GetAntenna(deviceData.WinusbHandle, &antennaIndex))
 	{
 		switch(antennaIndex)
 		{
