@@ -95,10 +95,10 @@ SoapySDR::Stream *SoapyICR8600::setupStream(const int direction, const std::stri
 	bufferData = (unsigned char*)malloc(2 * bufferLength * sizeof(unsigned char));
 
 	//Set parameters
-	SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetFrequency: %d", centerFrequency);
-	ICR8600SetFrequency(deviceData.WinusbHandle, centerFrequency);
-	SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetSampleRate: %d", sampleRate);
-	ICR8600SetSampleRate(deviceData.WinusbHandle, sampleRate);
+	//SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetFrequency: %d", centerFrequency);
+	//ICR8600SetFrequency(deviceData.WinusbHandle, centerFrequency);
+	//SoapySDR_logf(SOAPY_SDR_INFO, "ICR8600SetSampleRate: %d", sampleRate);
+	//ICR8600SetSampleRate(deviceData.WinusbHandle, sampleRate);
 
 	return (SoapySDR::Stream *) this;
 }
@@ -128,6 +128,8 @@ int SoapyICR8600::deactivateStream(SoapySDR::Stream *stream, const int flags, co
 }
 
 int SoapyICR8600::readStream(SoapySDR::Stream *stream, void * const *buffs, const size_t numElems, int &flags, long long &timeNs, const long timeoutUs) {
+	std::unique_lock<std::mutex> lock(_buf_mutex);
+	
 	SoapySDR_logf(SOAPY_SDR_TRACE, "SoapyICR8600::readStream: %d, flags: %d", numElems, flags);
 
 	ULONG cbRead = ICR8600ReadPipe(deviceData.WinusbHandle, bufferData, bufferLength);

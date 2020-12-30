@@ -112,6 +112,8 @@ std::vector<std::string> SoapyICR8600::listAntennas(const int direction, const s
 
 void SoapyICR8600::setAntenna(const int direction, const size_t channel, const std::string &name)
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	if (direction != SOAPY_SDR_RX)
 	{
 		throw std::runtime_error("setAntena failed: RTL-SDR only supports RX");
@@ -144,6 +146,8 @@ void SoapyICR8600::setAntenna(const int direction, const size_t channel, const s
 
 std::string SoapyICR8600::getAntenna(const int direction, const size_t channel) const
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	ULONG antennaIndex;
 	std::string antenna = "";
 
@@ -234,6 +238,8 @@ bool SoapyICR8600::getGainMode(const int direction, const size_t channel) const
 
 void SoapyICR8600::setGain(const int direction, const size_t channel, const double value)
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	//set the overall gain by distributing it across available gain elements
 
 	// RF Gain -63.75dB to 0dB
@@ -297,6 +303,8 @@ void SoapyICR8600::setGain(const int direction, const size_t channel, const doub
 
 void SoapyICR8600::setGain(const int direction, const size_t channel, const std::string &name, const double value)
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	//    SoapySDR_logf(SOAPY_SDR_DEBUG, "Setting RTL-SDR IF Gain for stage %d: %f", stage, IFGain[stage - 1]);
 
 	if (name == "RF")
@@ -350,6 +358,8 @@ double SoapyICR8600::getGain(const int direction, const size_t channel) const
 
 double SoapyICR8600::getGain(const int direction, const size_t channel, const std::string &name) const
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	ULONG set;
 	double gain;
 
@@ -454,6 +464,8 @@ SoapySDR::Range SoapyICR8600::getGainRange(const int direction, const size_t cha
 
 void SoapyICR8600::setFrequency(const int direction, const size_t channel, const std::string &name, const double frequency, const SoapySDR::Kwargs &args)
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	if (name == "RF")
 	{
 		centerFrequency = (ULONG)frequency;
@@ -517,6 +529,8 @@ SoapySDR::ArgInfoList SoapyICR8600::getFrequencyArgsInfo(const int direction, co
 
 void SoapyICR8600::setSampleRate(const int direction, const size_t channel, const double rate)
 {
+	std::lock_guard<std::mutex> lock(_device_mutex);
+
 	sampleRate = (ULONG)rate;
 	SoapySDR_logf(SOAPY_SDR_INFO, "Setting sample rate: %d", sampleRate);
 	ICR8600SetSampleRate(deviceData.WinusbHandle, sampleRate);
