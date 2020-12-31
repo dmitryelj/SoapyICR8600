@@ -44,6 +44,15 @@ for antenna in antennas:
 	sdr.setAntenna(SOAPY_SDR_RX, 0, antenna)
 	print("\tAntenna Readback = " + sdr.getAntenna(SOAPY_SDR_RX, 0))
 
+# set outside the HF band
+sdr.setFrequency(SOAPY_SDR_RX, 0, 100000000)
+# antennas 
+antennas = sdr.listAntennas(SOAPY_SDR_RX, 0)
+print("Antennas:", antennas)
+for antenna in antennas:
+	sdr.setAntenna(SOAPY_SDR_RX, 0, antenna)
+	print("\tAntenna Readback = " + sdr.getAntenna(SOAPY_SDR_RX, 0))
+
 # exercise gains
 gains = sdr.listGains(SOAPY_SDR_RX, 0)
 print("Gains:", gains)

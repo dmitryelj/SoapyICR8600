@@ -200,4 +200,10 @@ private:
 	int antennaIndex;
 	size_t bufferLength;
 	unsigned char *bufferData;
+
+	// mutex protection because we need to be thread safe
+	mutable std::mutex	_device_mutex;
+	std::mutex	_buf_mutex;
+
 };
+
