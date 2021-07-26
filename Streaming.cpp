@@ -143,7 +143,7 @@ int SoapyICR8600::readStream(SoapySDR::Stream *stream, void * const *buffs, cons
 		int16_t *itarget = (int16_t *)buff0;
 		for (ULONG p = 0; p < cbRead/4; p++) {
 			UCHAR c1 = s0[4 * p], c2 = s0[4*p + 1], c3 = s0[4 * p + 2], c4 = s0[4 * p + 3];
-			if (c1 != 0x00 && c2 != 0x80 && c3 != 0x00 && c4 != 0x80) {
+			if (c1 != 0x00 || c2 != 0x80 || c3 != 0x00 || c4 != 0x80) {
 				itarget[returnedElems++] = source[2*p];
 				itarget[returnedElems++] = source[2*p + 1];
 			}
@@ -156,7 +156,7 @@ int SoapyICR8600::readStream(SoapySDR::Stream *stream, void * const *buffs, cons
 		float *ftarget = (float *)buff0;
 		for (ULONG p = 0; p < cbRead / 4; p++) {
 			UCHAR c1 = s0[4 * p], c2 = s0[4 * p + 1], c3 = s0[4 * p + 2], c4 = s0[4 * p + 3];
-			if (c1 != 0x00 && c2 != 0x80 && c3 != 0x00 && c4 != 0x80) {
+			if (c1 != 0x00 || c2 != 0x80 || c3 != 0x00 || c4 != 0x80) {
 				ftarget[returnedElems++] = (float)(source[2*p]) / 32768;
 				ftarget[returnedElems++] = (float)(source[2*p + 1]) / 32768;
 			}
